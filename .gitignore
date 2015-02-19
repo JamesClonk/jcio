@@ -22,3 +22,9 @@ _testmain.go
 *.exe
 *.test
 *.prof
+
+# ssl
+*.pem
+*.key
+*.csr
+*.crt
