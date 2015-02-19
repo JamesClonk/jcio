@@ -40,6 +40,7 @@ rm -v ca.srl
 echo "chmod keys"
 chmod -v 400 ca-key.pem key.pem server-key.pem
 chmod -v 440 ca.pem server-cert.pem cert.pem
+chmod -v 750 .
 
 echo ""
 echo "certificates generated"
