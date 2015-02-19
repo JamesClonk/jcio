@@ -28,3 +28,9 @@ _testmain.go
 *.key
 *.csr
 *.crt
+phobos.jamesclonk.com
+deimos.jamesclonk.com
+
+# env
+.env
+.properties
