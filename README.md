@@ -1,4 +1,4 @@
-# jcio-build
+# jcio
 
 This builds the complete JCIO server and application setup on DigitalOcean
 - :globe_with_meridians: mars.<domain>.<tld>
