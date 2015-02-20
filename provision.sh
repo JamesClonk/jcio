@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+set -u
 
 # read configuration
 echo "Read configuration from .env"
@@ -24,16 +26,16 @@ go run droplets.go ${PHOBOS} nyc3 512mb docker
 echo ""
 
 # upload certs to docker hosts
-# TODO
+# TODO: upload certs to docker hosts
 
 # remove certs locally
-# TODO
+# TODO: remove certs locally
 
 # setup docker to use TLS
-# TODO
+# TODO: setup docker to use TLS
 
 # setup haproxy, etcd and shipyard on mars
-# TODO
+# TODO: setup haproxy, etcd and shipyard on mars
 
 # setup nginx, frontend and backend on phobos and deimos
-# TODO
+# TODO: setup nginx, frontend and backend on phobos and deimos

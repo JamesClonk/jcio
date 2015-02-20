@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+set -u
 
 if [ $# -ne 1 ]; then
 	echo "usage: $0 <FQDN>"
@@ -11,6 +13,7 @@ PASSWORD=$(openssl rand -base64 32)
 
 mkdir ${HOST}
 cd ${HOST}
+trap "cd ..; exit 1" INT TERM EXIT
 
 # generate certificates
 echo "create server keys"
