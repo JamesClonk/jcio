@@ -28,9 +28,11 @@ _testmain.go
 *.key
 *.csr
 *.crt
+droplets_to_provision.dat
 mars.jamesclonk.com
 phobos.jamesclonk.com
 deimos.jamesclonk.com
+*.ip_address
 
 # env
 .env

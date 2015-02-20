@@ -25,9 +25,18 @@ export DEIMOS="deimos.${JCIO_DOMAIN}"
 
 # provision droplets
 header "Provision DigitalOcean droplets"
-#go run droplets.go ${MARS} ams3 512mb docker
-#go run droplets.go ${PHOBOS} nyc3 512mb docker
-#go run droplets.go ${DEIMOS} ams3 512mb docker
+echo "${MARS} ams3 512mb docker" > droplets_to_provision.dat
+echo "${PHOBOS} nyc3 512mb docker" >> droplets_to_provision.dat
+echo "${DEIMOS} ams3 512mb docker" >> droplets_to_provision.dat
+go run droplets.go droplets_to_provision.dat
+
+# wait for tcp
+# header "Waiting for SSH"
+# HOST_IP=$(cat ${MARS}.ip_address)
+# until nc -zvw 1 ${HOST_IP} 22; do
+# 	echo "."
+# 	sleep 5
+# done
 
 # upload certs to docker hosts
 # TODO: upload certs to docker hosts
@@ -43,6 +52,10 @@ header "Provision DigitalOcean droplets"
 
 # cleanup
 header "It's cleanup time"
+rm -vf droplets_to_provision.dat
+rm -vf ${MARS}.ip_address
+rm -vf ${PHOBOS}.ip_address
+rm -vf ${DEIMOS}.ip_address
 rm -vrf ${MARS}
 rm -vrf ${PHOBOS}
 rm -vrf ${DEIMOS}
