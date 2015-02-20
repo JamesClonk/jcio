@@ -22,16 +22,16 @@ export PHOBOS_CERTS="${PHOBOS}_certificates"
 export DEIMOS_CERTS="${DEIMOS}_certificates"
 
 # create certs for docker daemons and clients
-./cert-gen.sh ${MARS_CERTS}
-./cert-gen.sh ${PHOBOS_CERTS}
-./cert-gen.sh ${DEIMOS_CERTS}
+./cert-gen.sh ${MARS}
+./cert-gen.sh ${PHOBOS}
+./cert-gen.sh ${DEIMOS}
 
 # provision droplets
 header "Provision DigitalOcean droplets"
 echo "${MARS} ams3 512mb docker" > droplets_to_provision.dat
 echo "${PHOBOS} nyc3 512mb docker" >> droplets_to_provision.dat
 echo "${DEIMOS} ams3 512mb docker" >> droplets_to_provision.dat
-go run droplets.go droplets_to_provision.dat
+#go run droplets.go droplets_to_provision.dat
 
 # wait for ssh
 header "Waiting for SSH"
@@ -46,17 +46,33 @@ for ip in ${IP_ADDRESSES[@]}; do
 	done
 done
 
+# update machines
+header "Update virtual machines"
+parallel -v --linebuffer ssh root@{1} "apt-get -q -y update" ::: ${MARS_IP} ${PHOBOS_IP} ${DEIMOS_IP}
+parallel -v --linebuffer ssh root@{1} "apt-get -q -y upgrade" ::: ${MARS_IP} ${PHOBOS_IP} ${DEIMOS_IP}
+
+# firewall setup
+header "Setup firewall (ufw)"
+parallel -v --linebuffer scp -r etc/default/ufw root@{1}:/etc/default/. ::: ${MARS_IP} ${PHOBOS_IP} ${DEIMOS_IP}
+# ~~TODO~~: ufw reload (not needed, ufw is not active by default on DO docker image)
+
 # upload certs to docker hosts
 header "Upload certificates for docker"
 # mars wants to know about all certs
-scp -o StrictHostKeyChecking=no -r ${MARS_CERTS} root@${MARS_IP}:.
-scp -o StrictHostKeyChecking=no -r ${PHOBOS_CERTS} root@${MARS_IP}:.
-scp -o StrictHostKeyChecking=no -r ${DEIMOS_CERTS} root@${MARS_IP}:.
+parallel -v --linebuffer scp -o StrictHostKeyChecking=no -r {1} root@${MARS_IP}:. ::: ${MARS_CERTS} ${PHOBOS_CERTS} ${DEIMOS_CERTS}
 # phobos and deimos only need theirs
-scp -o StrictHostKeyChecking=no -r ${PHOBOS_CERTS} root@${PHOBOS_IP}:.
-scp -o StrictHostKeyChecking=no -r ${DEIMOS_CERTS} root@${DEIMOS_IP}:.
+scp -r ${PHOBOS_CERTS} root@${PHOBOS_IP}:.
+scp -r ${DEIMOS_CERTS} root@${DEIMOS_IP}:.
 
 # setup docker to use TLS
+header "Setup docker to use TLS"
+parallel -v --linebuffer scp -r etc/default/docker root@{1}:/etc/default/. ::: ${MARS_IP} ${PHOBOS_IP} ${DEIMOS_IP}
+ssh root@${MARS_IP} "cp -R ${MARS_CERTS} .docker"
+ssh root@${PHOBOS_IP} "cp -R ${PHOBOS_CERTS} .docker"
+ssh root@${DEIMOS_IP} "cp -R ${DEIMOS_CERTS} .docker"
+ssh root@${MARS_IP} "service docker restart"
+ssh root@${PHOBOS_IP} "service docker restart"
+ssh root@${DEIMOS_IP} "service docker restart"
 # TODO: setup docker to use TLS
 
 # setup haproxy, etcd and shipyard on mars
@@ -68,9 +84,9 @@ scp -o StrictHostKeyChecking=no -r ${DEIMOS_CERTS} root@${DEIMOS_IP}:.
 # cleanup
 header "It's cleanup time"
 rm -vf droplets_to_provision.dat
-rm -vf ${MARS}.ip_address
-rm -vf ${PHOBOS}.ip_address
-rm -vf ${DEIMOS}.ip_address
+#rm -vf ${MARS}.ip_address
+#rm -vf ${PHOBOS}.ip_address
+#rm -vf ${DEIMOS}.ip_address
 rm -vrf ${MARS_CERTS}
 rm -vrf ${PHOBOS_CERTS}
 rm -vrf ${DEIMOS_CERTS}

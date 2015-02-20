@@ -12,12 +12,13 @@ if [ $# -ne 1 ]; then
 fi
 
 HOST=$1
+HOST_CERTS="${HOST}_certificates"
 SUBJ="/C=CH/ST=Bern/L=Bern/O=jamesclonk.io/OU=webdev/CN=${HOST}"
 PASSWORD=$(openssl rand -base64 32)
 
-rm -rf ${HOST} || true
-mkdir ${HOST}
-cd ${HOST}
+rm -rf ${HOST_CERTS} || true
+mkdir ${HOST_CERTS}
+cd ${HOST_CERTS}
 trap "cd ..; exit" INT TERM EXIT
 
 # generate certificates

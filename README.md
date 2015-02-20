@@ -9,7 +9,7 @@ This builds the complete JCIO server and application setup on DigitalOcean
 
 Requirements:
 
-* `bash`, `tput` / `ncurses`, `curl`, `nc`, `git`, `openssl`, `openssh`, `go`
+* `bash`, `tput` / `ncurses`, `curl`, `nc`, `parallel`, `git`, `openssl`, `openssh`, `go`
 
 ### Usage
 
