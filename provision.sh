@@ -31,6 +31,7 @@ header "Provision DigitalOcean droplets"
 echo "${MARS} ams3 512mb docker" > droplets_to_provision.dat
 echo "${PHOBOS} nyc3 512mb docker" >> droplets_to_provision.dat
 echo "${DEIMOS} ams3 512mb docker" >> droplets_to_provision.dat
+# TODO: uncomment line below!
 #go run droplets.go droplets_to_provision.dat
 
 # wait for ssh
@@ -45,6 +46,12 @@ for ip in ${IP_ADDRESSES[@]}; do
 		sleep 3
 	done
 done
+
+# update /etc/hosts
+# TODO: add entries to /etc/hosts..
+
+# update dnsimple entries
+# TODO: modify DNSimple..
 
 # update machines
 header "Update virtual machines"
@@ -64,19 +71,31 @@ parallel -v --linebuffer scp -o StrictHostKeyChecking=no -r {1} root@${MARS_IP}:
 scp -r ${PHOBOS_CERTS} root@${PHOBOS_IP}:.
 scp -r ${DEIMOS_CERTS} root@${DEIMOS_IP}:.
 
-# setup docker to use TLS
-header "Setup docker to use TLS"
+# setup docker
+header "Setup docker"
+# shutdown/kill all containers
+parallel -v --linebuffer ssh root@{1} 'docker ps -a -q | xargs docker kill' ::: ${MARS_IP} ${PHOBOS_IP} ${DEIMOS_IP}
+parallel -v --linebuffer ssh root@{1} 'docker ps -a -q | xargs docker rm' ::: ${MARS_IP} ${PHOBOS_IP} ${DEIMOS_IP}
+# upload docker configuration to use TLS
 parallel -v --linebuffer scp -r etc/default/docker root@{1}:/etc/default/. ::: ${MARS_IP} ${PHOBOS_IP} ${DEIMOS_IP}
 ssh root@${MARS_IP} "cp -R ${MARS_CERTS} .docker"
 ssh root@${PHOBOS_IP} "cp -R ${PHOBOS_CERTS} .docker"
 ssh root@${DEIMOS_IP} "cp -R ${DEIMOS_CERTS} .docker"
+# restart docker service
 ssh root@${MARS_IP} "service docker restart"
 ssh root@${PHOBOS_IP} "service docker restart"
 ssh root@${DEIMOS_IP} "service docker restart"
-# TODO: setup docker to use TLS
 
-# setup haproxy, etcd and shipyard on mars
-# TODO: setup haproxy, etcd and shipyard on mars
+# setup shipyard on mars
+header "Install shipyard"
+ssh root@${MARS_IP} "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock shipyard/deploy start"
+# TODO: put nginx HTTPS reverse proxy in front of shipyard
+# TODO: create certs for nginx HTTPS reverse proxy
+# TODO: add cpu- and memory-limit to "docker run" calls for containers.. for example 0.2 cpu, 64m for nginx?
+# TODO: give containers meaningful names when making "docker run" calls.. (--name)
+
+# setup haproxy and etcd on mars
+# TODO: setup haproxy and etcd on mars
 
 # setup nginx, frontend and backend on phobos and deimos
 # TODO: setup nginx, frontend and backend on phobos and deimos
@@ -84,6 +103,7 @@ ssh root@${DEIMOS_IP} "service docker restart"
 # cleanup
 header "It's cleanup time"
 rm -vf droplets_to_provision.dat
+# TODO: uncomment lines below!
 #rm -vf ${MARS}.ip_address
 #rm -vf ${PHOBOS}.ip_address
 #rm -vf ${DEIMOS}.ip_address

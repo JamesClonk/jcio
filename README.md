@@ -17,6 +17,7 @@ Write the following configuration variables into a file named `.env`:
 
 ```sh
 	DIGITALOCEAN_TOKEN=my_digitalocean_api_v2_token
+	DNSIMPLE_DOMAIN_TOKEN=my_dnsimple_domain_token
 	SSH_PUB_KEY_FILE=~/.ssh/id_rsa.pub
 	JCIO_DOMAIN=my_domain.tld
 	JCIO_USERNAME=my_username
