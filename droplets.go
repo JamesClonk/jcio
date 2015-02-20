@@ -25,14 +25,19 @@ func main() {
 	log.Printf("Droplet: %+v\n", droplet)
 }
 
-func connect() {
-	token := os.Getenv("DIGITALOCEAN_TOKEN")
-	if token == "" {
-		log.Fatal("DIGITALOCEAN_TOKEN is not set")
+func getEnv(key string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		log.Fatalf("%v is not set\n", key)
 	}
+	return value
+}
 
+func connect() {
 	tr := &oauth.Transport{
-		Token: &oauth.Token{AccessToken: token},
+		Token: &oauth.Token{
+			AccessToken: getEnv("DIGITALOCEAN_TOKEN"),
+		},
 	}
 	client = godo.NewClient(tr.Client())
 }
@@ -40,22 +45,13 @@ func connect() {
 func setupSSHKey() *godo.Key {
 	log.Println("Setup SSH public key")
 
-	pubKey := os.Getenv("SSH_PUB_KEY")
-	if pubKey == "" {
-		log.Fatal("SSH_PUB_KEY is not set")
-	}
-	fingerprint := os.Getenv("SSH_PUB_KEY_FINGERPRINT")
-	if fingerprint == "" {
-		log.Fatal("SSH_PUB_KEY_FINGERPRINT is not set")
-	}
-
 	// does JCIO key already exists?
-	key, _, err := client.Keys.GetByFingerprint(fingerprint)
+	key, _, err := client.Keys.GetByFingerprint(getEnv("SSH_PUB_KEY_FINGERPRINT"))
 	if err != nil {
 		// if not, upload new key
 		request := &godo.KeyCreateRequest{
 			Name:      "JCIO",
-			PublicKey: pubKey,
+			PublicKey: getEnv("SSH_PUB_KEY"),
 		}
 		key, _, err = client.Keys.Create(request)
 		if err != nil {
@@ -69,25 +65,27 @@ func setupDroplet(name, region, size, image string, key *godo.Key) *godo.Droplet
 	droplets := getDroplets()
 	for _, d := range droplets {
 		if d.Name == name {
+			if d.Status != "new" || d.Status != "active" {
+				startDroplet(&d)
+			}
 			return &d
 		}
 	}
-
-	d := createNewDroplet(name, region, size, image, key)
-	return d.Droplet
+	return createNewDroplet(name, region, size, image, key)
 }
 
 func getDroplets() []godo.Droplet {
-	list := []godo.Droplet{}
-	opt := &godo.ListOptions{}
+	droplets := []godo.Droplet{}
+	options := &godo.ListOptions{
+		PerPage: 25,
+	}
 	for {
-		droplets, resp, err := client.Droplets.List(opt)
+		ds, resp, err := client.Droplets.List(options)
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		for _, d := range droplets {
-			list = append(list, d)
+		for _, d := range ds {
+			droplets = append(droplets, d)
 		}
 		if resp.Links.IsLastPage() {
 			break
@@ -97,12 +95,12 @@ func getDroplets() []godo.Droplet {
 		if err != nil {
 			log.Fatal(err)
 		}
-		opt.Page = page + 1
+		options.Page = page + 1
 	}
-	return list
+	return droplets
 }
 
-func createNewDroplet(name, region, size, image string, key *godo.Key) *godo.DropletRoot {
+func createNewDroplet(name, region, size, image string, key *godo.Key) *godo.Droplet {
 	log.Println("Create new droplet: " + name)
 
 	request := &godo.DropletCreateRequest{
@@ -116,5 +114,17 @@ func createNewDroplet(name, region, size, image string, key *godo.Key) *godo.Dro
 	if err != nil {
 		log.Fatal(err)
 	}
-	return d
+	return d.Droplet
+}
+
+func startDroplet(droplet *godo.Droplet) {
+	log.Println("Start droplet: " + droplet.Name)
+
+	a, _, err := client.DropletActions.PowerOn(droplet.ID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if a.Status == "errored" {
+		log.Fatalf("Could not start droplet: %v\n", a.String())
+	}
 }

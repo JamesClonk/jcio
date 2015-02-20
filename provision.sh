@@ -6,14 +6,34 @@ export $(cat .env | xargs)
 SSH_FILENAME=$(eval "echo ${SSH_PUB_KEY_FILE}")
 export SSH_PUB_KEY=$(cat ${SSH_FILENAME})
 export SSH_PUB_KEY_FINGERPRINT=$(ssh-keygen -lf ${SSH_FILENAME} | awk '{print $2;}')
+export MARS="mars.${DOMAIN}"
+export PHOBOS="phobos.${DOMAIN}"
+export DEIMOS="deimos.${DOMAIN}"
 echo ""
 
-# create certs
-./cert-gen.sh phobos.jamesclonk.com
-./cert-gen.sh deimos.jamesclonk.com
+# create certs for docker daemons and clients
+./cert-gen.sh ${MARS}
+./cert-gen.sh ${PHOBOS}
+./cert-gen.sh ${DEIMOS}
 
-# provision digitalocean droplets
+# provision droplets
 echo "Provision DigitalOcean droplets"
-go run droplets.go phobos.jamesclonk.com nyc3 512mb docker
-#go run droplets.go deimos.jamesclonk.com ams2 512mb docker
+#go run droplets.go ${MARS} ams3 512mb docker
+go run droplets.go ${PHOBOS} nyc3 512mb docker
+#go run droplets.go ${DEIMOS} ams3 512mb docker
 echo ""
+
+# upload certs to docker hosts
+# TODO
+
+# remove certs locally
+# TODO
+
+# setup docker to use TLS
+# TODO
+
+# setup haproxy, etcd and shipyard on mars
+# TODO
+
+# setup nginx, frontend and backend on phobos and deimos
+# TODO

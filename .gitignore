@@ -28,6 +28,7 @@ _testmain.go
 *.key
 *.csr
 *.crt
+mars.jamesclonk.com
 phobos.jamesclonk.com
 deimos.jamesclonk.com
 
