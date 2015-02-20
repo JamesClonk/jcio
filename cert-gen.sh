@@ -2,6 +2,10 @@
 set -e
 set -u
 
+# includes
+source includes.sh
+
+# usage check
 if [ $# -ne 1 ]; then
 	echo "usage: $0 <FQDN>"
 	exit 1
@@ -11,12 +15,13 @@ HOST=$1
 SUBJ="/C=CH/ST=Bern/L=Bern/O=jamesclonk.io/OU=webdev/CN=${HOST}"
 PASSWORD=$(openssl rand -base64 32)
 
+rm -rf ${HOST} || true
 mkdir ${HOST}
 cd ${HOST}
-trap "cd ..; exit 1" INT TERM EXIT
+trap "cd ..; exit" INT TERM EXIT
 
 # generate certificates
-echo "create server keys"
+header "${HOST}: Create server keys"
 openssl genrsa -passout pass:${PASSWORD} -aes256 -out ca-key.pem 2048
 openssl req -passin pass:${PASSWORD} -new -x509 -days 3650 -key ca-key.pem -sha256 -out ca.pem -subj ${SUBJ}
 openssl genrsa -out server-key.pem 2048
@@ -24,30 +29,30 @@ openssl req -new -key server-key.pem -out server.csr -subj ${SUBJ}
 openssl x509 -passin pass:${PASSWORD} -req -days 3650 -in server.csr -CA ca.pem -CAkey ca-key.pem \
     -CAcreateserial -out server-cert.pem
 
-echo "create client keys"
+header "${HOST}: Create client keys"
 openssl genrsa -out key.pem 2048
 openssl req -subj '/CN=client' -new -key key.pem -out client.csr
 echo "extendedKeyUsage = clientAuth" > extfile.cnf
 openssl x509 -passin pass:${PASSWORD} -req -days 3650 -in client.csr -CA ca.pem -CAkey ca-key.pem \
     -CAcreateserial -out cert.pem -extfile extfile.cnf
 
-echo "strip password from keys"
+header "${HOST}: Strip password from keys"
 openssl rsa -in server-key.pem -out server-key.pem
 openssl rsa -in key.pem -out key.pem
 
-echo "remove files"
-rm -v client.csr server.csr
-rm -v extfile.cnf
-rm -v ca.srl
+header "${HOST}: Remove files"
+rm -vf client.csr server.csr
+rm -vf extfile.cnf
+rm -vf ca.srl
 
-echo "chmod keys"
+header "${HOST}: Chmod keys"
 chmod -v 400 ca-key.pem key.pem server-key.pem
 chmod -v 440 ca.pem server-cert.pem cert.pem
 chmod -v 750 .
 
-echo ""
-echo "certificates generated"
+header "${HOST}: Certificates generated"
 ls -l
-echo ""
 
 cd ..
+
+exit 0
