@@ -102,10 +102,10 @@ ssh root@${DEIMOS_IP} "service docker restart"
 # setup shipyard on mars
 header "Install shipyard"
 ssh root@${MARS_IP} "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock shipyard/deploy start"
-# TODO: add new admin account to shipyard (use API over HTTPS!) (http://shipyard-project.com/docs/api/)
-# TODO: remove old admin account from shipyard (use API over HTTPS!) (http://shipyard-project.com/docs/api/)
+# configure shipyard (accounts and engines)
+scp -r root/configure_shipyard.sh root@${MARS_IP}:.
+ssh root@${MARS_IP} "./configure_shipyard.sh $JCIO_USERNAME $JCIO_PASSWORD"
 # TODO: add phobos and deimos as engines to shipyard (use API over HTTPS!) (http://shipyard-project.com/docs/api/)
-# TODO: add cpu- and memory-limit to "docker run" calls for containers.. for example 0.2 cpu, 64m for nginx?
 
 
 # setup haproxy and etcd on mars
@@ -114,6 +114,7 @@ ssh root@${MARS_IP} "docker run --rm -v /var/run/docker.sock:/var/run/docker.soc
 
 # setup nginx, frontend and backend on phobos and deimos
 # TODO: setup nginx, frontend and backend on phobos and deimos
+# TODO: add cpu- and memory-limit to "docker run" calls for containers.. for example 0.2 cpu, 64m for nginx?
 
 
 # setup nginx on mars (nginx must be last to run because it needs to link to other containers for reverse proxying)
