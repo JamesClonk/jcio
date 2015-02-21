@@ -21,7 +21,7 @@ export MARS_CERTS="${MARS}_certificates"
 export PHOBOS_CERTS="${PHOBOS}_certificates"
 export DEIMOS_CERTS="${DEIMOS}_certificates"
 
-# create certs for docker daemons and clients
+# create certs for docker hosts
 ./cert-gen.sh ${MARS}
 ./cert-gen.sh ${PHOBOS}
 ./cert-gen.sh ${DEIMOS}
@@ -64,7 +64,7 @@ parallel -v --linebuffer scp -r etc/default/ufw root@{1}:/etc/default/. ::: ${MA
 # ~~TODO~~: ufw reload (not needed, ufw is not active by default on DO docker image)
 
 # upload certs to docker hosts
-header "Upload certificates for docker"
+header "Upload certificates"
 # mars wants to know about all certs
 parallel -v --linebuffer scp -o StrictHostKeyChecking=no -r {1} root@${MARS_IP}:. ::: ${MARS_CERTS} ${PHOBOS_CERTS} ${DEIMOS_CERTS}
 # phobos and deimos only need theirs
@@ -88,8 +88,10 @@ ssh root@${DEIMOS_IP} "service docker restart"
 
 # setup nginx on mars
 header "Install nginx"
-# TODO: create certs for nginx HTTPS reverse proxy, permanent redirect of http to HTTPS
-# TODO: nginx will reverse proxy shipyard
+ssh root@${MARS_IP} "git clone https://github.com/JamesClonk/jcio-nginx-master"
+ssh root@${MARS_IP} "cd jcio-nginx-master; ./build.sh ${MARS}"
+ssh root@${MARS_IP} "docker run -d -p 80:80 -p 443:443 --name nginx-mars jcio-nginx-master"
+# TODO: set nginx to HTTPS reverse proxy, permanent redirect of http to HTTPS
 
 # setup shipyard on mars
 header "Install shipyard"
