@@ -131,7 +131,7 @@ ssh root@${DEIMOS_IP} "docker run -d -p 80:80 -p 443:443 -c 512 -m 64m --name ng
 header "Install nginx"
 ssh root@${MARS_IP} "rm -rf jcio-nginx-master; git clone https://github.com/JamesClonk/jcio-nginx-master"
 ssh root@${MARS_IP} "cd jcio-nginx-master; ./build.sh ${MARS}"
-ssh root@${MARS_IP} "docker run -d -p 80:80 -p 443:443 --link shipyard:shipyard --name nginx-mars jcio-nginx-master"
+ssh root@${MARS_IP} "docker run -d -p 80:80 -p 443:443 --link shipyard:shipyard -c 512 -m 64m --name nginx-mars jcio-nginx-master"
 
 
 # cleanup
