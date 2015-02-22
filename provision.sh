@@ -96,9 +96,9 @@ parallel -v --linebuffer ssh root@{1} '"docker ps -a -q | xargs docker kill"' ::
 parallel -v --linebuffer ssh root@{1} '"docker ps -a -q | xargs docker rm"' ::: ${MARS_IP} ${PHOBOS_IP} ${DEIMOS_IP}
 # upload docker configuration to use TLS
 parallel -v --linebuffer scp -r etc/default/docker root@{1}:/etc/default/. ::: ${MARS_IP} ${PHOBOS_IP} ${DEIMOS_IP}
-ssh root@${MARS_IP} "cp -R ${MARS_CERTS} .docker"
-ssh root@${PHOBOS_IP} "cp -R ${PHOBOS_CERTS} .docker"
-ssh root@${DEIMOS_IP} "cp -R ${DEIMOS_CERTS} .docker"
+ssh root@${MARS_IP} "rm -rf .docker; cp -R ${MARS_CERTS} .docker"
+ssh root@${PHOBOS_IP} "rm -rf .docker; cp -R ${PHOBOS_CERTS} .docker"
+ssh root@${DEIMOS_IP} "rm -rf .docker; cp -R ${DEIMOS_CERTS} .docker"
 # restart docker service
 ssh root@${MARS_IP} "service docker restart"
 ssh root@${PHOBOS_IP} "service docker restart"

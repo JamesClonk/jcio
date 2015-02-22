@@ -18,8 +18,9 @@ until nc -zvw 1 localhost 8080; do
 done
 
 # configure shipyard
-go build
+#go build
 ./shipyard ${INPUT_FILENAME}
-# TODO: prepackage binary, so golang installation and build step is not needed
+
+rm -vf ${INPUT_FILENAME}
 
 exit 0
