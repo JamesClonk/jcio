@@ -86,7 +86,7 @@ func addEngines() {
 		sslkey := readPem(host, "key.pem")
 		cacert := readPem(host, "ca.pem")
 		cpu := 1.0
-		memory := 416
+		memory := 416.0
 		if err := client.AddEngine(id, sslcert, sslkey, cacert, url, cpu, memory); err != nil {
 			log.Fatal(err)
 		}
