@@ -112,6 +112,7 @@ ssh root@${MARS_IP} "docker run --rm -v /var/run/docker.sock:/var/run/docker.soc
 export SHIPYARD_CONFIG_FILE=shipyard.conf
 echo "username=${JCIO_USERNAME}" > modules/shipyard/${SHIPYARD_CONFIG_FILE}
 echo "password=${JCIO_PASSWORD}" >> modules/shipyard/${SHIPYARD_CONFIG_FILE}
+echo "engines=${PHOBOS};${DEIMOS}" >> modules/shipyard/${SHIPYARD_CONFIG_FILE}
 scp -r modules/shipyard/${SHIPYARD_CONFIG_FILE} root@${MARS_IP}:jcio/modules/shipyard/.
 ssh root@${MARS_IP} "cd jcio/modules/shipyard; ./configure_shipyard.sh ${SHIPYARD_CONFIG_FILE}"
 # TODO: add phobos and deimos as engines to shipyard (use API over HTTPS!) (http://shipyard-project.com/docs/api/)
