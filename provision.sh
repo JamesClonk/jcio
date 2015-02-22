@@ -35,7 +35,7 @@ echo "${MARS} ams3 512mb docker" > droplets_to_provision.dat
 echo "${PHOBOS} nyc3 512mb docker" >> droplets_to_provision.dat
 echo "${DEIMOS} ams3 512mb docker" >> droplets_to_provision.dat
 # TODO: uncomment line below!
-#go run droplets.go droplets_to_provision.dat
+go run modules/droplets/main.go droplets_to_provision.dat
 
 
 # wait for ssh
@@ -52,6 +52,11 @@ for ip in ${IP_ADDRESSES[@]}; do
 done
 
 
+# clone this repo to all hosts
+header "Clone jcio repository"
+parallel -v --linebuffer ssh root@{1} "rm -rf jcio; git clone https://github.com/JamesClonk/jcio" ::: ${MARS_IP} ${PHOBOS_IP} ${DEIMOS_IP}
+
+
 # update /etc/hosts
 # TODO: add entries to /etc/hosts.. (but only if they dont exist there yet)
 
@@ -65,6 +70,7 @@ header "Update virtual machines"
 # TODO: uncomment the lines below
 #parallel -v --linebuffer ssh root@{1} "apt-get -q -y update" ::: ${MARS_IP} ${PHOBOS_IP} ${DEIMOS_IP}
 #parallel -v --linebuffer ssh root@{1} "apt-get -q -y upgrade" ::: ${MARS_IP} ${PHOBOS_IP} ${DEIMOS_IP}
+parallel -v --linebuffer ssh root@{1} "apt-get -q -y curl wget golang" ::: ${MARS_IP} ${PHOBOS_IP} ${DEIMOS_IP}
 
 
 # firewall setup
@@ -103,8 +109,10 @@ ssh root@${DEIMOS_IP} "service docker restart"
 header "Install shipyard"
 ssh root@${MARS_IP} "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock shipyard/deploy start"
 # configure shipyard (accounts and engines)
-scp -r root/configure_shipyard.sh root@${MARS_IP}:.
-ssh root@${MARS_IP} "./configure_shipyard.sh $JCIO_USERNAME $JCIO_PASSWORD"
+export SHIPYARD_CONFIG_FILE=shipyard.conf
+echo "bla" > ${SHIPYARD_CONFIG_FILE}
+scp -r ${SHIPYARD_CONFIG_FILE} root@${MARS_IP}:.
+ssh root@${MARS_IP} "cd jcio/modules; ./configure_shipyard.sh ${SHIPYARD_CONFIG_FILE}"
 # TODO: add phobos and deimos as engines to shipyard (use API over HTTPS!) (http://shipyard-project.com/docs/api/)
 
 

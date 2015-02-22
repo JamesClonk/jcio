@@ -17,7 +17,7 @@ var client *godo.Client
 
 func main() {
 	if len(os.Args) != 2 {
-		log.Fatal("usage: droplets.go <input-filename>")
+		log.Fatal("usage: ./droplets <input-filename>")
 	}
 
 	droplets := createDroplets(os.Args[1])

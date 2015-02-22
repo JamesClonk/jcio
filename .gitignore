@@ -36,3 +36,4 @@ deimos.jamesclonk.com*
 # env
 .env
 .properties
+*.conf
