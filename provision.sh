@@ -34,8 +34,7 @@ header "Provision DigitalOcean droplets"
 echo "${MARS} ams3 512mb docker" > droplets_to_provision.dat
 echo "${PHOBOS} nyc3 512mb docker" >> droplets_to_provision.dat
 echo "${DEIMOS} ams3 512mb docker" >> droplets_to_provision.dat
-# TODO: uncomment line below!
-#go run modules/droplets/main.go droplets_to_provision.dat
+./modules/droplets/droplets droplets_to_provision.dat
 
 
 # wait for ssh
@@ -124,6 +123,8 @@ ssh root@${MARS_IP} "cd jcio/modules/shipyard; ./configure_shipyard.sh ${SHIPYAR
 # setup nginx, frontend and backend on phobos and deimos
 # TODO: setup nginx, frontend and backend on phobos and deimos
 # TODO: add cpu- and memory-limit to "docker run" calls for containers.. for example 0.2 cpu, 64m for nginx?
+ssh root@${PHOBOS_IP} "docker run -d -p 80:80 -p 443:443 -c 512 -m 64m --name nginx-phobos nginx"
+ssh root@${DEIMOS_IP} "docker run -d -p 80:80 -p 443:443 -c 512 -m 64m --name nginx-deimos nginx"
 
 
 # setup nginx on mars (nginx must be last to run because it needs to link to other containers for reverse proxying)
@@ -136,6 +137,7 @@ ssh root@${MARS_IP} "docker run -d -p 80:80 -p 443:443 --link shipyard:shipyard 
 # cleanup
 header "It's cleanup time"
 rm -vf droplets_to_provision.dat
+rm -vf modules/shipyard/${SHIPYARD_CONFIG_FILE}
 # TODO: uncomment lines below!
 #rm -vf ${MARS}.ip_address
 #rm -vf ${PHOBOS}.ip_address
