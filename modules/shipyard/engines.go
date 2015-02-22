@@ -22,7 +22,7 @@ func (c *Client) AddEngine(id, sslcert, sslkey, cacert, url string, cpu, memory 
 		SSLCertificate: sslcert,
 		SSLKey:         sslkey,
 		CACertificate:  cacert,
-		Engine: &EngineOptions{
+		Engine: EngineOptions{
 			ID:      id,
 			Labels:  []string{id},
 			Address: url,
