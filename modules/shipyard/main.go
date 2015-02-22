@@ -9,6 +9,7 @@ import (
 )
 
 var config map[string]string = make(map[string]string)
+var client *Client
 
 func main() {
 	if len(os.Args) != 2 {
@@ -16,7 +17,7 @@ func main() {
 	}
 	readConfig(os.Args[1])
 
-	client := NewClient("http://localhost:8080")
+	client = NewClient("http://localhost:8080")
 	log.Println("Login to shipyard")
 	if err := client.Login("admin", "shipyard"); err != nil {
 		log.Fatal(err)
@@ -24,12 +25,12 @@ func main() {
 
 	addEngines()
 
-	log.Println("Add account to shipyard: " + config["username"])
+	log.Printf("Add account to shipyard: %s\n", config["username"])
 	if err := client.AddAccount(config["username"], config["password"]); err != nil {
 		log.Fatal(err)
 	}
 
-	log.Println("Delete account from shipyard: " + admin)
+	log.Println("Delete account from shipyard: admin")
 	if err := client.DeleteAccount("admin"); err != nil {
 		log.Fatal(err)
 	}
@@ -78,7 +79,7 @@ func addEngines() {
 	}
 
 	for _, host := range engines {
-		log.Println("Add engine to shipyard: " + host)
+		log.Printf("Add engine to shipyard: %s\n", host)
 		id := getEngineId(host)
 		url := "https://" + host + ":2376"
 		sslcert := readPem(host, "cert.pem")

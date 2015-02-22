@@ -17,7 +17,7 @@ type EngineOptions struct {
 }
 
 func (c *Client) AddEngine(id, sslcert, sslkey, cacert, url string, cpu, memory float64) error {
-	engine = &Engine{
+	engine := &Engine{
 		ID:             id,
 		SSLCertificate: sslcert,
 		SSLKey:         sslkey,
