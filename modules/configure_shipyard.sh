@@ -19,6 +19,7 @@ done
 
 # configure shipyard
 cd shipyard
+# TODO: prepackage binary, so golang installation and build step is not needed
 go build
 ./shipyard ${INPUT_FILENAME}
 

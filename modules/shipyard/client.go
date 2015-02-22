@@ -19,7 +19,6 @@ type Client struct {
 	Endpoint  *url.URL
 	Token     string
 	Username  string
-	Password  string
 }
 
 func NewClient(endpoint string) *Client {
@@ -39,15 +38,15 @@ func NewClient(endpoint string) *Client {
 	}
 }
 
-func (c *Client) get(path string, data interface{}) error {
+func (c *Client) get(expectedCode int, path string, data interface{}) error {
 	req, err := c.newRequest("GET", path, nil)
 	if err != nil {
 		return err
 	}
-	return c.do(req, data)
+	return c.do(expectedCode, req, data)
 }
 
-func (c *Client) post(path string, values interface{}, data interface{}) error {
+func (c *Client) post(expectedCode int, path string, values interface{}, data interface{}) error {
 	b, err := json.Marshal(values)
 	if err != nil {
 		return err
@@ -56,16 +55,28 @@ func (c *Client) post(path string, values interface{}, data interface{}) error {
 	if err != nil {
 		return err
 	}
-	return c.do(req, data)
+	return c.do(expectedCode, req, data)
 }
 
-func (c *Client) do(req *http.Request, data interface{}) error {
+func (c *Client) delete(expectedCode int, path string, values interface{}, data interface{}) error {
+	b, err := json.Marshal(values)
+	if err != nil {
+		return err
+	}
+	req, err := c.newRequest("DELETE", path, bytes.NewBuffer(b))
+	if err != nil {
+		return err
+	}
+	return c.do(expectedCode, req, data)
+}
+
+func (c *Client) do(expectedCode int, req *http.Request, data interface{}) error {
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
-	if err := checkResponse(resp); err != nil {
+	if err := checkResponse(expectedCode, resp); err != nil {
 		return err
 	}
 	if data != nil {
@@ -100,8 +111,8 @@ func (c *Client) newRequest(method string, path string, body io.Reader) (*http.R
 	return req, nil
 }
 
-func checkResponse(resp *http.Response) error {
-	if resp.StatusCode == http.StatusOK {
+func checkResponse(expectedCode int, resp *http.Response) error {
+	if resp.StatusCode == expectedCode {
 		return nil
 	}
 	data, err := ioutil.ReadAll(resp.Body)
