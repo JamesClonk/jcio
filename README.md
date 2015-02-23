@@ -36,7 +36,7 @@ Run `provision.sh`
 
 - phobos and deimos themselves register to mars' etcd-cluster
 - phobos and deimos apps/docker containers also register to mars' etcd cluster
-- phobos and deimos app architecture: ->nginx->frontend->backend (what about status and ninja? :question:)
+- phobos and deimos app architecture: ->nginx->frontend->backend->rqlite (what about status and ninja? :question:)
 
 - mars' haproxy reads from etcd-cluster to know how/where to route/proxy to
 - mars' haproxy load balances to phobos and deimos nginx container
