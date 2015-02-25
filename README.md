@@ -33,10 +33,12 @@ Run `provision.sh`
 #### Design notes
 
 - mars is where haproxy, etcd-cluster and shipyard are running
+- use rancher instead of shipyard? :question:
 
 - phobos and deimos themselves register to mars' etcd-cluster
 - phobos and deimos apps/docker containers also register to mars' etcd cluster
 - phobos and deimos app architecture: ->nginx->frontend->backend->rqlite (what about status and ninja? :question:)
+- use docker-swarm for managing phobos-deimos together? :question:
 
 - mars' haproxy reads from etcd-cluster to know how/where to route/proxy to
 - mars' haproxy load balances to phobos and deimos nginx container
