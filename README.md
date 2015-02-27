@@ -30,6 +30,10 @@ Run `provision.sh`
  $ ./provision.sh
 ```
 
+#### Overview
+
+![Overview](https://github.com/JamesClonk/jcio/raw/master/jcio.png "OVerview")
+
 #### Design notes
 
 - mars is where haproxy, etcd-cluster and shipyard are running
