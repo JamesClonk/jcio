@@ -83,8 +83,7 @@ header "Upload certificates"
 # mars wants to know about all certs
 parallel -v --linebuffer scp -o StrictHostKeyChecking=no -r {1} root@${MARS_IP}:. ::: ${MARS_CERTS} ${PHOBOS_CERTS} ${DEIMOS_CERTS}
 # phobos and deimos only need theirs
-scp -r ${PHOBOS_CERTS} root@${PHOBOS_IP}:.
-scp -r ${DEIMOS_CERTS} root@${DEIMOS_IP}:.
+parallel -v --xapply --linebuffer scp -r {1} root@{2}:. ::: ${PHOBOS_CERTS} ${DEIMOS_CERTS} ::: ${PHOBOS_IP} ${DEIMOS_IP}
 
 
 # setup docker
@@ -95,13 +94,9 @@ parallel -v --linebuffer ssh root@{1} '"docker ps -a -q | xargs docker kill"' ::
 parallel -v --linebuffer ssh root@{1} '"docker ps -a -q | xargs docker rm"' ::: ${MARS_IP} ${PHOBOS_IP} ${DEIMOS_IP}
 # upload docker configuration to use TLS
 parallel -v --linebuffer scp -r etc/default/docker root@{1}:/etc/default/. ::: ${MARS_IP} ${PHOBOS_IP} ${DEIMOS_IP}
-ssh root@${MARS_IP} "rm -rf .docker; cp -R ${MARS_CERTS} .docker"
-ssh root@${PHOBOS_IP} "rm -rf .docker; cp -R ${PHOBOS_CERTS} .docker"
-ssh root@${DEIMOS_IP} "rm -rf .docker; cp -R ${DEIMOS_CERTS} .docker"
+parallel -v --xapply --linebuffer ssh root@{1} '"rm -rf .docker; cp -R {2} .docker"' ::: ${MARS_IP} ${PHOBOS_IP} ${DEIMOS_IP} ::: ${MARS_CERTS} ${PHOBOS_CERTS} ${DEIMOS_CERTS}
 # restart docker service
-ssh root@${MARS_IP} "service docker restart"
-ssh root@${PHOBOS_IP} "service docker restart"
-ssh root@${DEIMOS_IP} "service docker restart"
+parallel -v --linebuffer ssh root@{1} "service docker restart" ::: ${MARS_IP} ${PHOBOS_IP} ${DEIMOS_IP}
 
 
 # setup shipyard on mars
@@ -121,14 +116,15 @@ ssh root@${MARS_IP} "cd jcio/modules/shipyard; ./configure_shipyard.sh ${SHIPYAR
 
 
 # setup nginx, frontend and backend on phobos and deimos
-# TODO: setup nginx, frontend and backend on phobos and deimos
-# TODO: add cpu- and memory-limit to "docker run" calls for containers.. for example 0.2 cpu, 64m for nginx?
-ssh root@${PHOBOS_IP} "docker run -d -p 80:80 -p 443:443 -c 512 -m 64m --name nginx-phobos nginx"
-ssh root@${DEIMOS_IP} "docker run -d -p 80:80 -p 443:443 -c 512 -m 64m --name nginx-deimos nginx"
+# TODO: setup frontend and backend on phobos and deimos
+header "Install nginx on Phobos and Deimos"
+parallel -v --linebuffer ssh root@{1} '"rm -rf jcio-nginx-slave; git clone https://github.com/JamesClonk/jcio-nginx-slave"' ::: ${PHOBOS_IP} ${DEIMOS_IP}
+parallel -v --xapply --linebuffer ssh root@{1} '"cd jcio-nginx-slave; ./build.sh {2}"' ::: ${PHOBOS_IP} ${DEIMOS_IP} ::: ${PHOBOS} ${DEIMOS}
+parallel -v --xapply --linebuffer ssh root@{1} '"docker run -d -p 80:80 -p 443:443 --link frontend:frontend --link backend:backend --link rqlite:rqlite -c 512 -m 64m --name nginx-{2} jcio-nginx-slave"' ::: ${PHOBOS_IP} ${DEIMOS_IP} ::: ${PHOBOS} ${DEIMOS}
 
 
 # setup nginx on mars (nginx must be last to run because it needs to link to other containers for reverse proxying)
-header "Install nginx"
+header "Install nginx on Mars"
 ssh root@${MARS_IP} "rm -rf jcio-nginx-master; git clone https://github.com/JamesClonk/jcio-nginx-master"
 ssh root@${MARS_IP} "cd jcio-nginx-master; ./build.sh ${MARS}"
 ssh root@${MARS_IP} "docker run -d -p 80:80 -p 443:443 --link shipyard:shipyard -c 512 -m 64m --name nginx-mars jcio-nginx-master"

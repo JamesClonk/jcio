@@ -2,8 +2,8 @@
 
 This builds the complete JCIO server and application setup on DigitalOcean
 - :globe_with_meridians: mars.<domain>.<tld>
-- :first_quarter_moon: phobos.<domain>.<tld>
-- :last_quarter_moon: deimos.<domain>.<tld>
+- :last_quarter_moon: phobos.<domain>.<tld>
+- :first_quarter_moon: deimos.<domain>.<tld>
 
 ### Installation
 
