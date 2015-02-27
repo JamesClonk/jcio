@@ -22,6 +22,9 @@ Write the following configuration variables into a file named `.env`:
 	JCIO_DOMAIN=my_domain.tld
 	JCIO_USERNAME=my_username
 	JCIO_PASSWORD=my_password
+	WEBSITE_PRIVATE_REPOSITORY_URL=git@123.456.789.0:/git/website.git
+	PRIVATE_REPOSITORY_FRONTEND_FOLDER=frontend
+	PRIVATE_REPOSITORY_BACKEND_FOLDER=backend
 ```
 
 Run `provision.sh`

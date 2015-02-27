@@ -115,12 +115,20 @@ ssh root@${MARS_IP} "cd jcio/modules/shipyard; ./configure_shipyard.sh ${SHIPYAR
 # TODO: setup haproxy and etcd on mars
 
 
-# setup nginx, frontend and backend on phobos and deimos
-# TODO: setup frontend and backend on phobos and deimos
+# setup frontend and backend on phobos and deimos
+header "Install frontend and backend on Phobos and Deimos"
+parallel -v --linebuffer ssh root@{1} '"rm -rf httpd; git clone {2}"' ::: ${PHOBOS_IP} ${DEIMOS_IP} ::: ${WEBSITE_PRIVATE_REPOSITORY_URL}
+parallel -v --linebuffer ssh root@{1} '"cd {2}; ./docker_build.sh jcio-frontend-slave"' ::: ${PHOBOS_IP} ${DEIMOS_IP} ::: ${PRIVATE_REPOSITORY_FRONTEND_FOLDER}
+parallel -v --linebuffer ssh root@{1} '"cd {2}; ./docker_build.sh jcio-backend-slave"' ::: ${PHOBOS_IP} ${DEIMOS_IP} ::: ${PRIVATE_REPOSITORY_BACKEND_FOLDER}
+parallel -v --xapply --linebuffer ssh root@{1} '"docker run -d -p 4000:4000 -c 512 -m 64m --name backend-{2} jcio-frontend-slave"' ::: ${PHOBOS_IP} ${DEIMOS_IP} ::: ${PHOBOS} ${DEIMOS}
+parallel -v --xapply --linebuffer ssh root@{1} '"docker run -d -p 3000:3000 --link backend:backend -c 512 -m 64m --name backend-{2} jcio-backend-slave"' ::: ${PHOBOS_IP} ${DEIMOS_IP} ::: ${PHOBOS} ${DEIMOS}
+
+
+# setup nginx on phobos and deimos (nginx must be last to run because it needs to link to other containers for reverse proxying)
 header "Install nginx on Phobos and Deimos"
 parallel -v --linebuffer ssh root@{1} '"rm -rf jcio-nginx-slave; git clone https://github.com/JamesClonk/jcio-nginx-slave"' ::: ${PHOBOS_IP} ${DEIMOS_IP}
 parallel -v --xapply --linebuffer ssh root@{1} '"cd jcio-nginx-slave; ./build.sh {2}"' ::: ${PHOBOS_IP} ${DEIMOS_IP} ::: ${PHOBOS} ${DEIMOS}
-parallel -v --xapply --linebuffer ssh root@{1} '"docker run -d -p 80:80 -p 443:443 --link frontend:frontend --link backend:backend --link rqlite:rqlite -c 512 -m 64m --name nginx-{2} jcio-nginx-slave"' ::: ${PHOBOS_IP} ${DEIMOS_IP} ::: ${PHOBOS} ${DEIMOS}
+parallel -v --xapply --linebuffer ssh root@{1} '"docker run -d -p 80:80 -p 443:443 --link frontend:frontend --link backend:backend -c 512 -m 64m --name nginx-{2} jcio-nginx-slave"' ::: ${PHOBOS_IP} ${DEIMOS_IP} ::: ${PHOBOS} ${DEIMOS}
 
 
 # setup nginx on mars (nginx must be last to run because it needs to link to other containers for reverse proxying)
