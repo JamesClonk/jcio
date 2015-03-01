@@ -37,3 +37,5 @@ deimos.jamesclonk.com*
 .env
 .properties
 *.conf
+*.swp
+
